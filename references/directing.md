@@ -69,11 +69,13 @@ Frame-sampled study of two strong explainer channels (2s sampling, mid-video seg
 | map/diagram | ~0% | 13% |
 | **pop-in overlaid ON a scene** | **10% of frames** | **39% of frames** |
 
-The prop-heavy grammar is the house default: in a narrated minute that means **a word-synced
-object beat roughly every 6-8 seconds**, not 1-2 per video. Devices observed and how to use them:
+The measured densities are the CEILING of the reference style, NOT the house target. The house
+rule is **moderation**: pick only the 3-5 strongest load-bearing nouns per minute and beat those;
+literalizing every noun reads as clutter and gets rejected ("kararında kullan"). One beat moment
+may still be compound (crown pop + X-out counts as one moment). Devices observed:
 
-1. **Noun literalization (the core rule)**: when the narration names a concrete noun (gold,
-   tribes, crown, plague), SHOW it — a transparent prop PNG pops in over the scene exactly on
+1. **Noun literalization**: when the narration names a LOAD-BEARING concrete noun (gold,
+   crown), SHOW it — a transparent prop PNG pops in over the scene exactly on
    the word (we have word timestamps). Props float in empty sky/wall areas or just above heads.
 2. **Pop-settle animation**: 3 pre-scaled sizes switched with enable windows
    (1.35x for 0.07s → 1.12x for 0.07s → 1.0x until scene end) + a short pop SFX (~0.3 gain)

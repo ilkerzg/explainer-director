@@ -73,3 +73,11 @@ def needs_backing(plate_path, x, y, w, h, pad=28):
 If true, re-render the card PNG on a rounded white box (padding ~28px, fill (250,249,246,235),
 thin charcoal border optional) so the text owns its area — like a printed label. Never shrink
 the text to fit noise; back it instead.
+
+## Card entrance: fast pop-in (current rule — replaces the old wipe reveal)
+
+Cards no longer wipe or fade. They POP: pre-render the card PNG at 3 scales and switch with
+overlay enable windows — 1.18x for 0.06s, 1.06x for 0.06s, then 1.0x until the exit time;
+exit is INSTANT (enable window simply ends). Same mechanism as object-beat props, so cards and
+props share one animation language. Never use alpha fades or slow left-to-right wipes — user
+rejected them ("şu fading ve revealing text muhabbetinden vazgeç... popping up... aşırı hızlı").
