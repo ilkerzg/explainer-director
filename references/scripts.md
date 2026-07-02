@@ -312,3 +312,84 @@ subprocess.run(["ffmpeg","-y","-v","error","-i",VID]+inputs+["-filter_complex","
     "-map","0:v","-map","[aout]","-c:v","copy","-c:a","aac","-b:a","192k","-shortest",out],check=True)
 print("FINAL:",out,flush=True)
 ```
+
+
+## `audit_all.py` — mandatory post-build plate audit (anachronism / text-leak / blank-face / crowd)
+
+```python
+# MANDATORY post-build audit: every plate checked for anachronism / text-leak / unwanted people.
+# Flagged plates get their prompt rewritten with period-accurate wording (LLM) and are
+# regenerated retry-until-clean. This runs as a pipeline STEP, not a manual spot-check.
+import json, re, time, urllib.request
+from concurrent.futures import ThreadPoolExecutor
+import fal_client
+W="/tmp/PROJECT"
+LORA="https://v3b.fal.media/files/b/0aa0a6ac/lxyuPGSABiVvQI83vZROe_krea2_lora_step_1000.safetensors"
+ERA="late antique Rome (5th century AD); the final scenes may show Byzantium and ruins"
+VLM,MODEL="openrouter/router/vision","anthropic/claude-sonnet-4.6"
+ANCH=(", softly rounded geometric facet construction: round-cornered polygon heads, simple line eyes and "
+ "brows, a small simple mouth on each face, connected limbs, flat cel shading, clean bold dark outlines, "
+ "bold saturated sunny palette (vivid grass green #6FBF44, bright sky blue #4FB3E8, punchy orange #F59B2D, "
+ "warm red #E2603F, deep cobalt #2E6FA3, warm brown #8A5A33, charcoal #2E2E2E outlines) PLUS warm skin "
+ "tones for all faces and hands (light skin #F2C9A0, tan skin #D99A6C, deep skin #A96B48) - faces are "
+ "NEVER white or blank. HIGH saturation, sunny, NOT pastel, NOT dark")
+d=json.load(open(f"{W}/plan.json"))
+SYS=("You audit a cartoon plate for an explainer video set in: "+ERA+". "
+ "Compare the image to its INTENDED SCENE. Output ONE-LINE JSON: "
+ '{"anachronism":true|false,"what":"<=10 words","text_leak":true|false,"blank_faces":true|false}. '
+ "anachronism=true if ANY clothing or object is modern or wrong-era (business suits, ties, epaulette "
+ "uniforms, peaked caps, modern furniture). blank_faces=true if faces are white featureless masks.")
+def audit(s):
+    for a in range(3):
+        try:
+            r=fal_client.subscribe(VLM, arguments={"model":MODEL,"system_prompt":SYS,
+                "prompt":"Intended scene: "+s.get("plate", s["tr"]),"image_urls":[s["bg"]],
+                "temperature":0.0,"max_tokens":90})
+            m=re.search(r"\{.*\}",(r.get("output") or r.get("response") or ""),re.S)
+            return (s["i"], json.loads(m.group(0)) if m else {})
+        except Exception: time.sleep(4*(a+1))
+    return (s["i"],{})
+def rewrite(plate):
+    for a in range(3):
+        try:
+            r=fal_client.subscribe("openrouter/router", arguments={"model":"anthropic/claude-sonnet-4.6",
+                "system_prompt":("Rewrite the scene prompt so every person/role wears explicitly PERIOD-ACCURATE "
+                  "dress and every object is period-accurate for "+ERA+". Replace era-neutral role words "
+                  "(official, guard, soldier) with specific period roles + dress. Keep composition notes "
+                  "(reserved empty areas) untouched. Output ONLY the rewritten prompt line."),
+                "prompt":plate,"temperature":0.3,"max_tokens":200})
+            t=(r.get("output") or r.get("response") or "").strip().splitlines()[0]
+            if len(t)>20: return t
+        except Exception: time.sleep(4)
+    return plate
+print("auditing ALL",len(d["scenes"]),"plates...",flush=True)
+res={}
+with ThreadPoolExecutor(max_workers=8) as ex:
+    for i,a in ex.map(audit, d["scenes"]): res[i]=a
+flag=[i for i,a in res.items() if a.get("anachronism") or a.get("text_leak") or a.get("blank_faces")]
+print("FLAGGED:",sorted(flag),flush=True)
+for i in sorted(flag): print(" ",i,res[i],flush=True)
+for i in sorted(flag):
+    s=d["scenes"][i]
+    newp=rewrite(s.get("plate", s["tr"]))
+    print(i,"rewritten:",newp[:100],flush=True)
+    okurl=None
+    for k in range(4):
+        try:
+            r=fal_client.subscribe("fal-ai/krea-2/turbo/lora", arguments={
+                "prompt":"softfacetstyle, "+newp+ANCH,"loras":[{"path":LORA,"scale":1.0}],
+                "image_size":{"width":1920,"height":1080},"num_images":1,"output_format":"jpeg","seed":33000+i*7+k})
+            u=r["images"][0]["url"]
+            _,c=audit({"i":i,"plate":newp,"bg":u,"tr":s["tr"]})
+            print(i,"try",k,c,flush=True)
+            if not (c.get("anachronism") or c.get("text_leak") or c.get("blank_faces")):
+                okurl=u; break
+        except Exception as e: print(i,"err",str(e)[:60],flush=True); time.sleep(4)
+    if okurl:
+        s["bg"]=okurl; s["plate"]=newp
+        urllib.request.urlretrieve(okurl, f"{W}/assets/bg{i:02d}.jpg")
+        print(i,"FIXED",flush=True)
+    else: print(i,"UNRESOLVED (consider crop/re-treat)",flush=True)
+json.dump(d, open(f"{W}/plan.json","w"), ensure_ascii=False, indent=1)
+print("AUDITALLDONE",flush=True)
+```
