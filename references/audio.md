@@ -40,3 +40,23 @@ Video is input 0 → narration `[1:a]`, music `[2:a]`, SFX from `[3:a]`. Getting
 2. **Style LoRAs trained on character-heavy datasets have a crowd bias**: they insert rows of foreground people into "empty" scenes. Prose clauses ("no people") are stochastic. The reliable fix is a **retry-until-clean loop**: generate → focused vision check ({"people":bool,"top_clear":bool}) → new seed on failure; after 2 failures drop LoRA scale (1.0 → 0.75 → 0.6). Converges in 1-3 tries.
 3. **Pure-backdrop plates (flat color cards) should be drawn with PIL**, not generated — guaranteed clean.
 4. Never write the word "EMPTY" in a plate prompt where text could render — it can leak as literal rendered text. Use "a large clear open sky" phrasing.
+
+
+## Anachronism & prompt-leak audit (mandatory, after plate generation)
+
+Vision-audit every plate (against its PLATE PROMPT) for three failure classes:
+1. **Anachronisms**: modern caps/uniforms/objects in ancient scenes, wrong-era props. Ask:
+   {"anachronism":true|false,"what":"..."}.
+2. **Prompt leaks**: instruction words rendered as signs/labels (a poster reading "Edict /
+   completely empty scene" happened in production). NEVER put meta-instructions where they can
+   be read as sign text; phrase emptiness as scene adjectives ("deserted, nobody around") and
+   always check {"text_leak":true|false}.
+3. **Unwanted people/crowds** (see Plate QA at scale below).
+
+Remedies, in order of preference:
+- **Regenerate** with corrected prompt (period-accurate wording, new seed, retry-until-clean).
+- **CROP the shot**: if the offending element sits at an edge, crop to a clean sub-rectangle
+  (keep ≥1280×720, then scale up to 1920×1080) and use the cropped plate — the director is
+  allowed to reframe. ffmpeg: `crop=W:H:X:Y,scale=1920:1080`.
+- **CUT / re-treat**: if unrecoverable, change the scene's treatment (swap to an insert, a map
+  beat, or a text card on a PIL backdrop) rather than shipping a broken shot.

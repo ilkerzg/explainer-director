@@ -53,3 +53,23 @@ screenplay text at a ROW boundary into <4600-char chunks, TTS each chunk separat
 to wav, concat with ffmpeg, re-encode one narration.mp3, then upload it and run scribe-v2 ONCE
 on the full file — global word timestamps keep the exact-alignment code unchanged. The join
 lands on a natural sentence gap (a cut point), so pacing is unaffected.
+
+
+## Text readability: auto-backing box
+
+Cards must stay readable even when a plate's reserved area turns out busy. Before compositing,
+measure the region under the card and add a white backing box when needed:
+
+```python
+from PIL import Image, ImageStat
+def needs_backing(plate_path, x, y, w, h, pad=28):
+    reg = Image.open(plate_path).convert("L").crop((max(0,x-pad), max(0,y-pad), x+w+pad, y+h+pad))
+    st = ImageStat.Stat(reg)
+    variance, mean = st.var[0], st.mean[0]
+    contrast = abs(mean - 26)          # 26 = ink luminance
+    return variance > 900 or contrast < 90
+```
+
+If true, re-render the card PNG on a rounded white box (padding ~28px, fill (250,249,246,235),
+thin charcoal border optional) so the text owns its area — like a printed label. Never shrink
+the text to fit noise; back it instead.
