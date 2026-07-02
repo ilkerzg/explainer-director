@@ -60,3 +60,14 @@ Remedies, in order of preference:
   allowed to reframe. ffmpeg: `crop=W:H:X:Y,scale=1920:1080`.
 - **CUT / re-treat**: if unrecoverable, change the scene's treatment (swap to an insert, a map
   beat, or a text card on a PIL backdrop) rather than shipping a broken shot.
+
+
+## Audit bar: modern-vs-period, not century pedantry
+
+The anachronism auditor blocks on OBVIOUSLY wrong items: modern clothing (suits, ties, jeans,
+epaulette uniforms, peaked caps), modern objects (phones, plastic), or clearly wrong
+civilization. It must NOT block on century-level equipment pedantry within the right
+civilization (e.g. early-Imperial lorica segmentata in a 5th-century Roman scene is
+acceptable for a stylized cartoon). If the auditor loops on such pedantry, either accept the
+plate or RE-TREAT the scene (object insert / map beat) per the remedy ladder — an unresolved
+flag must never ship, but neither should a false one burn retries forever.
