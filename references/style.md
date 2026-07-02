@@ -13,8 +13,10 @@ Rounded-facet character construction on a cool neutral palette. Trained as a Kre
 and brows, arms and legs clearly connected to the body (no floating hands), flat cel shading,
 clean bold dark outlines, bold saturated sunny palette (vivid grass green #6FBF44, bright sky
 blue #4FB3E8, punchy orange #F59B2D, warm red #E2603F, deep cobalt #2E6FA3, warm brown #8A5A33,
-charcoal #2E2E2E outlines, golden sand #EFC75E only as a small accent), HIGH saturation and
-brightness, sunny daylight, NOT pastel, NOT muted, NOT dark, NO yellow wash
+charcoal #2E2E2E outlines, golden sand #EFC75E only as a small accent) PLUS warm skin tones for
+all faces and hands (light skin #F2C9A0, tan skin #D99A6C, deep skin #A96B48) - faces are NEVER
+white or blank, always a skin tone with simple line eyes, brows and a small mouth, HIGH
+saturation and brightness, sunny daylight, NOT pastel, NOT muted, NOT dark, NO yellow wash
 ```
 
 Rules learned the hard way:
@@ -47,3 +49,17 @@ NOT pastel, NOT muted, NOT dark, NO yellow wash.
 a 108-image breadth dataset (empty scenes, objects, icons, maps, all eras) whose faces drifted
 slightly toward generic cartoon; with the anchor ("round-cornered polygon heads, simple line
 eyes...") the facet look locks back in. Bare prompts without the anchor give softer faces.
+
+
+## Face & wardrobe failure modes (learned in production)
+
+1. **A hex-restricted palette with NO skin tone produces white mask-faces** — "use EXACTLY these
+   hexes" leaves the model nothing to paint skin with. The anchor above now includes three skin
+   hexes and the "faces are NEVER white or blank" clause; keep them in every prompt.
+2. **Era-neutral role words summon modern wardrobe**: "official" → business suit and tie,
+   "guard" → epauletted uniform. Never use a bare role word — always attach period dress:
+   "a roman quaestor in a white toga with a purple stripe", "legionaries in segmented armor
+   with crested helmets". This is the same period-accuracy rule as directing.md, enforced at
+   the word level.
+3. **Clone faces**: when every character is hood+dash-eyes, vary hair/beard/age and give named
+   characters their character-sheet descriptor; faces need eyes, brows AND a small mouth.
