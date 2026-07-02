@@ -393,3 +393,58 @@ for i in sorted(flag):
 json.dump(d, open(f"{W}/plan.json","w"), ensure_ascii=False, indent=1)
 print("AUDITALLDONE",flush=True)
 ```
+
+
+## 7) `props.py` — word-synced object-beat pass (run AFTER compose, BEFORE audio)
+
+```python
+# Noun literalization: prop PNGs pop in over the concatenated video at word timestamps.
+import json, subprocess
+from PIL import Image, ImageDraw
+W="/tmp/PROJECT"
+d=json.load(open(f"{W}/plan.json")); sc=d["scenes"]; words=d["words"]
+def wt(si, prefix):
+    import unicodedata
+    n=lambda t:"".join(c for c in unicodedata.normalize("NFKD",t.lower()) if c.isalnum())
+    for wo in words[sc[si]["w0"]:sc[si]["w1"]]:
+        if n(wo["text"]).startswith(n(prefix)): return wo["start"]
+    raise SystemExit(f"word {prefix} not in scene {si}")
+import os
+for f in os.listdir(f"{W}/assets"):   # trim transparent margins for accurate centering
+    if f.startswith("prop_") and f.endswith(".png"):
+        p=f"{W}/assets/{f}"; im=Image.open(p).convert("RGBA"); bb=im.getbbox()
+        if bb and bb!=(0,0,im.width,im.height): im.crop(bb).save(p)
+def stroke(p0,p1,path):                # red X as two strokes revealed sequentially
+    im=Image.new("RGBA",(420,420),(0,0,0,0)); dr=ImageDraw.Draw(im)
+    dr.line([p0,p1],fill=(226,54,40,255),width=64)
+    for pt in (p0,p1): dr.ellipse([pt[0]-32,pt[1]-32,pt[0]+32,pt[1]+32],fill=(226,54,40,255))
+    im.save(path)
+stroke((60,60),(360,360),f"{W}/assets/xs1.png"); stroke((360,60),(60,360),f"{W}/assets/xs2.png")
+# (png, scene, sync_word, cx, cy, size_px, extra_delay) — pick cx,cy by VIEWING each plate
+B=[("prop_coin",3,"gold",960,140,210,0),
+   ("prop_crown",11,"deposed",1560,215,260,0),
+   ("xs1",11,"deposed",1560,215,300,0.30), ("xs2",11,"deposed",1560,215,300,0.44)]
+cmd=["ffmpeg","-y","-v","error","-i",f"{W}/video_only.mp4"]
+fc=[]; cur="0:v"; beats=[]
+for bi,(png,si,wrd,cx,cy,sz,off) in enumerate(B):
+    t0=wt(si,wrd)-0.05+off; te=sc[si]["end"]-0.08
+    cmd+=["-loop","1","-i",f"{W}/assets/{png}.png"]
+    iw,ih=Image.open(f"{W}/assets/{png}.png").size
+    fc.append(f"[{bi+1}:v]format=rgba,split=3[p{bi}a][p{bi}b][p{bi}c]")
+    ol=cur   # pop-settle: 1.35x -> 1.12x -> 1.0x via enable windows
+    for j,(f_,ta,tb) in enumerate([(1.35,t0,t0+0.07),(1.12,t0+0.07,t0+0.14),(1.0,t0+0.14,te)]):
+        w=int(sz*f_*iw/max(iw,ih)); h=int(sz*f_*ih/max(iw,ih)); lbl=f"b{bi}{'abc'[j]}"; nxt=f"v{bi}{j}"
+        fc.append(f"[p{bi}{'abc'[j]}]scale={w}:{h}[{lbl}]")
+        fc.append(f"[{ol}][{lbl}]overlay=x={cx-w//2}:y={cy-h//2}:enable='between(t,{ta:.2f},{tb:.2f})'[{nxt}]")
+        ol=nxt
+    cur=ol
+    if off==0: beats.append({"t":round(t0+0.02,2),"kind":("thud" if "crown" in png else "pop")})
+json.dump(beats, open(f"{W}/beats.json","w"))
+subprocess.run(cmd+["-filter_complex",";".join(fc),"-map",f"[{cur}]","-an","-r","30",
+    "-c:v","libx264","-preset","medium","-crf","19",f"{W}/video_props.mp4"],check=True)
+print("PROPS PASS DONE")
+```
+
+In `audio.py`: use `video_props.mp4` when present, and mix `beats.json` pops via
+`adelay` (`sfx_pop` 0.30 / `sfx_thud` 0.38 gain). Generate the two SFX once with
+`fal-ai/elevenlabs/sound-effects/v2` ("short cartoon bubble pop", "short deep comedic stamp thud").

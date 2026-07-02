@@ -58,16 +58,45 @@ Every prompt with people or objects must name PERIOD-ACCURATE dress and props ex
 the model dresses ancient scenes in modern caps, belts and uniforms. The QA pass audits for
 anachronisms (see audio.md) and offending shots are regenerated, cropped or re-treated.
 
-## Symbol & word beats (expanded grammar)
+## Object-beat grammar (MEASURED from reference explainers — not optional garnish)
 
-Beyond quiet cards, use these ATTENTION beats sparingly (1 per 20-30s max), synced to their word:
-- **Full-frame word slam**: a giant single word/year filling the frame over a flat PIL backdrop;
-  appears with a fast wipe or a 2-frame scale-settle (1.06 → 1.0) for a "slam" feel.
-- **Stamp**: a round seal/emblem PNG that lands with a quick scale-down (1.4 → 1.0 over ~0.18s)
-  plus a thud SFX — ffmpeg: `scale=iw*max(1,1.4-2.2*t):-1` on the overlay input, or pre-render
-  3 sizes and switch with enable windows.
-- **X-out**: a bold red X drawn over an object insert — two thick strokes revealed sequentially
-  with the geq wipe (stroke 1 for 0.15s, then stroke 2), plus a squeak/thud SFX.
-- **Icon beats**: lightbulb = idea, clock = time, arrows = trends, speech-bubble-with-pictogram =
-  quotes. Generate icons in-style on plain background, bg-remove, overlay like cutouts.
-These carry the story's feel: sometimes the word IS the shot; sometimes a mark comments on the shot.
+Frame-sampled study of two strong explainer channels (2s sampling, mid-video segments):
+
+| device | restrained style | prop-heavy style |
+|---|---|---|
+| plain scene | 96% | 70% |
+| full-frame insert | 4% | 16% |
+| map/diagram | ~0% | 13% |
+| **pop-in overlaid ON a scene** | **10% of frames** | **39% of frames** |
+
+The prop-heavy grammar is the house default: in a narrated minute that means **a word-synced
+object beat roughly every 6-8 seconds**, not 1-2 per video. Devices observed and how to use them:
+
+1. **Noun literalization (the core rule)**: when the narration names a concrete noun (gold,
+   tribes, crown, plague), SHOW it — a transparent prop PNG pops in over the scene exactly on
+   the word (we have word timestamps). Props float in empty sky/wall areas or just above heads.
+2. **Pop-settle animation**: 3 pre-scaled sizes switched with enable windows
+   (1.35x for 0.07s → 1.12x for 0.07s → 1.0x until scene end) + a short pop SFX (~0.3 gain)
+   on the beat. Reads as a snappy cartoon pop without per-frame scale expressions.
+3. **X-out on a prop**: crown pops on "deposed", then a bold red X lands over it in two
+   sequential strokes (stroke 2 at +0.12-0.14s) + thud SFX. Negation/death/ending beats.
+4. **Word slam over the scene**: a giant card-font word/year stamped OVER the live scene
+   (not only on flat backdrops).
+5. **Label + tiny arrow**: small caps label pointing at a thing in-scene for asides.
+6. **Overlay marks on faces/objects**: a single tear, sweat drop, ! or ? — one mark, brief.
+7. **Repeating micro-beats**: the same small mark popping 2-3 times in a row synced to a word
+   sequence ("one bad decision at a time" → three X's popping left to right).
+
+Production: generate props square on a plain solid light-gray background, `remove-background`,
+PIL-trim transparent margins (accurate centering), overlay on the CONCATENATED video at
+absolute word times as a separate pass — no need to touch per-scene segments. Pop SFX beats
+join the final mix via adelay (pop 0.30, thud 0.38 gain).
+
+## Symbol & word beats (attention devices, use sparingly on top of object beats)
+
+- **Full-frame word slam**: giant single word/year filling the frame; fast wipe or 2-frame
+  scale-settle (1.06 → 1.0). 1 per 20-30s max.
+- **Stamp**: round seal/emblem PNG landing with a scale-down (1.4 → 1.0 over ~0.18s) + thud.
+- **Icon beats**: lightbulb = idea, clock = time, arrows = trends, speech-bubble-with-pictogram
+  = quotes. Generated in-style, bg-removed, overlaid like cutouts.
+Sometimes the word IS the shot; sometimes a mark comments on the shot.
