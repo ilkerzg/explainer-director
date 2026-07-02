@@ -44,3 +44,12 @@ a='alpha(X,Y)*clip(((W+90)*clip(min((T-TS)/0.55,(TE-T)/0.45),0,1)-X)/60,0,1)'[tx
 - `TS` = sync word start (scene-local); `TE = max(TS+1.6, scene_dur-0.25)`.
 - The `W+90` margin is REQUIRED — without it the trailing ~60px stays ghost-transparent at full reveal.
 - Word sync: find the first word in the scene window whose normalized text starts with the target prefix.
+
+
+## TTS length limit (hard)
+
+`eleven-v3` rejects texts over **5000 characters**. For long scripts (~5+ minutes), split the
+screenplay text at a ROW boundary into <4600-char chunks, TTS each chunk separately, decode
+to wav, concat with ffmpeg, re-encode one narration.mp3, then upload it and run scribe-v2 ONCE
+on the full file — global word timestamps keep the exact-alignment code unchanged. The join
+lands on a natural sentence gap (a cut point), so pacing is unaffected.
