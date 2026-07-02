@@ -32,3 +32,11 @@ Video is input 0 → narration `[1:a]`, music `[2:a]`, SFX from `[3:a]`. Getting
 6. End-frame scan of video clips (no pen/hand artifacts).
 7. `ffmpeg -hide_banner -i out.mp4 -af volumedetect -f null -`: mix mean ≈ narration-alone mean; max ≈ −0.1 dB (no clipping). (`-v error` suppresses volumedetect output — don't use it here.)
 8. Duration = narration length; filmstrip of ~8 spread timestamps matches the screenplay order.
+
+
+## Plate QA at scale (mandatory for 60+ scene builds)
+
+1. **Persist every plate prompt in plan.json** (`scene["plate"]`). Audits must compare the image against the PLATE PROMPT (visual intent), never against the narration sentence — metaphorical narration makes a narration-based auditor flag good plates, and mass-regenerating from narration destroys authored prompts (reserved text areas, composition notes).
+2. **Style LoRAs trained on character-heavy datasets have a crowd bias**: they insert rows of foreground people into "empty" scenes. Prose clauses ("no people") are stochastic. The reliable fix is a **retry-until-clean loop**: generate → focused vision check ({"people":bool,"top_clear":bool}) → new seed on failure; after 2 failures drop LoRA scale (1.0 → 0.75 → 0.6). Converges in 1-3 tries.
+3. **Pure-backdrop plates (flat color cards) should be drawn with PIL**, not generated — guaranteed clean.
+4. Never write the word "EMPTY" in a plate prompt where text could render — it can leak as literal rendered text. Use "a large clear open sky" phrasing.
