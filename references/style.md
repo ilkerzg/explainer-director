@@ -11,9 +11,10 @@ Rounded-facet character construction on a cool neutral palette. Trained as a Kre
 ```
 , softly rounded geometric facet construction: round-cornered polygon heads, simple line eyes
 and brows, arms and legs clearly connected to the body (no floating hands), flat cel shading,
-clean bold dark outlines, cool neutral palette (slate blue, muted teal, terracotta, muted
-burgundy, sage green, charcoal, off-white), cool light gray background tones, NO yellow,
-NO beige, NO cream, NO amber wash
+clean bold dark outlines, bold saturated sunny palette (vivid grass green #6FBF44, bright sky
+blue #4FB3E8, punchy orange #F59B2D, warm red #E2603F, deep cobalt #2E6FA3, warm brown #8A5A33,
+charcoal #2E2E2E outlines, golden sand #EFC75E only as a small accent), HIGH saturation and
+brightness, sunny daylight, NOT pastel, NOT muted, NOT dark, NO yellow wash
 ```
 
 Rules learned the hard way:
@@ -32,7 +33,7 @@ Rules learned the hard way:
 
 ## Dataset recipe (for training your own variant)
 
-50 images via `openai/gpt-image-2/edit` with one reference image in your target style as `image_urls`, prompt = "Use the reference image ONLY for its art style and copy that style EXACTLY: <anchor text>. Draw this scene in exactly that style: <subject>." Subjects span eras (ancient→future), characters AND objects/landscapes/crowds/close-ups, mixed aspects. Captions: `<your trigger>, <content only>` (no style/color words). Train: krea-2-trainer, 1000 steps, res 768, LR 1e-4.
+~108 images via `openai/gpt-image-2/edit` with one reference image in your target style as `image_urls`, prompt = "Use the reference image ONLY for its art style and copy that style EXACTLY: <anchor text>. Draw this scene in exactly that style: <subject>." Subjects span eras (ancient→future), characters AND objects/landscapes/crowds/close-ups, mixed aspects. Captions: `<your trigger>, <content only>` (no style/color words). Train: krea-2-trainer, 1000 steps, res 768, LR 1e-4.
 
 ## Palette v2 (user-approved, saturated & sunny)
 
