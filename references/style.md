@@ -63,3 +63,15 @@ eyes...") the facet look locks back in. Bare prompts without the anchor give sof
    the word level.
 3. **Clone faces**: when every character is hood+dash-eyes, vary hair/beard/age and give named
    characters their character-sheet descriptor; faces need eyes, brows AND a small mouth.
+
+
+## Reserved-area phrasing for text-prone styles
+
+The "LARGE EMPTY <area>" reservation phrase can LEAK into the drawing as written text in
+text-prone styles (a pen-sketch LoRA wrote "LARGE" on a stadium and on a scientist's badge —
+same failure mode as hardening clauses rendering as sign text). For such styles, phrase
+reservations as lowercase descriptive scene language ("a clear open dusk sky filling the upper
+third, nothing on it") — never shouty ALL-CAPS tokens. Also expect style-specific biases to
+force the remedy ladder: a centered-big-character LoRA may never honor "small figure, empty
+upper half" — re-treat with the PIL flat-backdrop trick (sample clean paper/sky texture from an
+existing plate, scale up, paste a bg-removed cutout small at the bottom).
