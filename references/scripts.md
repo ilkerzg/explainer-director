@@ -179,11 +179,11 @@ render("t1", ["THE","LIGHTHOUSE"], 110)   # one render() call per text card in t
 print("DONE")
 ```
 
-## `compose.py` — per-scene ffmpeg (Ken Burns / composites / video / wipe text) + concat + narration
+## `compose.py` — per-scene ffmpeg (Ken Burns / composites / video / pop-in text) + concat + narration
 
 ```python
 # Director's composition: per-scene ffmpeg builds (kenburns / animated composites / video),
-# word-synced text cards with a left-to-right wipe reveal, concat, narration mux.
+# word-synced text cards with a FAST pop-in (never fade/wipe), concat, narration mux.
 import json, os, subprocess, unicodedata
 W="/tmp/PROJECT"
 d=json.load(open(f"{W}/plan.json"))
@@ -215,19 +215,21 @@ def run(cmd): subprocess.run(cmd, check=True)
 
 from PIL import Image as _PImage
 def txt_chain(idx, s, in_label, txt_input=1):
-    """Left-to-right wipe reveal (never a fade). The W+90 margin is REQUIRED —
-    without it the trailing ~60px of the card stays ghost-transparent at full reveal."""
+    """FAST POP-IN (the house rule — never a fade, never a slow wipe): 3 pre-scaled
+    card PNGs switched with enable windows, 1.18x -> 1.06x -> 1.0x; instant out."""
     if idx not in TXT: return ("", in_label, [])
     png,sync,cx,cy=TXT[idx]
-    pw,ph=_PImage.open(f"{W}/txt/{png}.png").size
-    x=int(cx-pw/2); y=int(cy-ph/2)
+    base=_PImage.open(f"{W}/txt/{png}.png")
     ts=word_time(s, sync)
     te=max(ts+1.6, s["dur"]-0.25)          # visible until just before the cut
-    f=(f";[{txt_input}:v]format=rgba,fps={FPS},"
-       f"geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':"
-       f"a='alpha(X,Y)*clip(((W+90)*clip(min((T-{ts:.2f})/0.55\\,({te:.2f}-T)/0.45)\\,0\\,1)-X)/60\\,0\\,1)'[txt];"
-       f"[{in_label}][txt]overlay=x={x}:y={y}:enable='between(t,{ts:.2f},{te:.2f})'[vout]")
-    return (f, "vout", [f"{W}/txt/{png}.png"])
+    f=""; ol=in_label; files=[]
+    for j,(sc_,ta,tb) in enumerate([(1.18,ts,ts+0.06),(1.06,ts+0.06,ts+0.12),(1.0,ts+0.12,te)]):
+        w=max(2,int(base.width*sc_)); h=max(2,int(base.height*sc_))
+        p=f"{W}/txt/{png}_{j}.png"; base.resize((w,h)).save(p); files.append(p)
+        f+=(f";[{txt_input+j}:v]format=rgba[tx{idx}{j}];"
+            f"[{ol}][tx{idx}{j}]overlay=x={cx-w//2}:y={cy-h//2}:enable='between(t,{ta:.2f},{tb:.2f})'[to{idx}{j}]")
+        ol=f"to{idx}{j}"
+    return (f, ol, files)
 
 for s in scenes:
     i=s["i"]; dur=s["dur"]; out=f"{W}/segs/seg{i:02d}.mp4"
@@ -244,7 +246,7 @@ for s in scenes:
             f"[1:v]scale=520:-1[s1];[2:v]scale=360:-1[s2];"
             f"[bg][s2]overlay=x='-360+(t/{dur})*1250':y='430+7*sin(2*PI*(t+1.3)/4.2)'[a];"
             f"[a][s1]overlay=x='-560+(t/{dur})*1750':y='520+9*sin(2*PI*t/3.6)'[pre]")
-        tfc,ol,extra=txt_chain(i,s,"pre",txt_input=3)   # text PNG is input 3 here: bg(0) + two cutouts(1,2)
+        tfc,ol,extra=txt_chain(i,s,"pre",txt_input=3)   # 3 card PNGs start at input 3: bg(0) + two cutouts(1,2)
         cmd=["ffmpeg","-y","-v","error","-loop","1","-i",bg,"-loop","1","-i",f"{W}/cut/boat1.png",
              "-loop","1","-i",f"{W}/cut/boat2.png"]
         for e in extra: cmd+=["-loop","1","-i",e]
