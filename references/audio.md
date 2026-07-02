@@ -71,3 +71,19 @@ civilization (e.g. early-Imperial lorica segmentata in a 5th-century Roman scene
 acceptable for a stylized cartoon). If the auditor loops on such pedantry, either accept the
 plate or RE-TREAT the scene (object insert / map beat) per the remedy ladder — an unresolved
 flag must never ship, but neither should a false one burn retries forever.
+
+
+## Audit calibration lessons (production-learned)
+
+- **Style-inherent micro-marks are NOT text_leak.** Some LoRA styles draw tiny chest badges/pins
+  with 2-3 pseudo-letters as part of their character design (the style's training data has them).
+  An auditor that flags these blocks EVERY people-plate and burns all retries — the LoRA will
+  keep drawing them. Calibrate the audit prompt: text_leak = sign/poster/scoreboard/jersey-print
+  scale or legible words; badge-scale marks are acceptable. If a whole audit round comes back
+  with dozens of badge flags, recalibrate the auditor — don't regenerate the world.
+- **Guard the prompt rewriter against meaning drift.** An LLM asked to "fix" a flagged prompt
+  can change a noun's MEANING: "a lone fan in a stadium stand" was rewritten to "a small electric
+  desk fan sitting in a stadium stand" — and the regen dutifully drew a desk fan, which then
+  passed the audit. Tell the rewriter that ambiguous nouns keep their human/scene meaning, and
+  eyeball every rewritten prompt (or diff its nouns) before regenerating. A plate that "passes"
+  can still be nonsense — the audit checks violations, not intent.
