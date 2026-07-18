@@ -81,3 +81,22 @@ overlay enable windows — 1.18x for 0.06s, 1.06x for 0.06s, then 1.0x until the
 exit is INSTANT (enable window simply ends). Same mechanism as object-beat props, so cards and
 props share one animation language. Never use alpha fades or slow left-to-right wipes — user
 rejected them ("şu fading ve revealing text muhabbetinden vazgeç... popping up... aşırı hızlı").
+
+
+## Speaker identification: SUBTITLES with speaker-name prefix (house default)
+
+The user's chosen solution for "who is speaking" in dialogue is SUBTITLES, not forced
+portraits/nameplates. Rules:
+- Subtitle the WHOLE project. Narrator cues: plain text. In-world dialogue cues: prefix the
+  speaker name in their accent colour, e.g. "Hector: ..." / "Achilles: ..." (name coloured +
+  bold, body white).
+- Visuals stay FREE (fast cuts across scene plates); the subtitle carries identity, so there is
+  no need to place the speaker on screen, no lower-third nameplate chip, no forced
+  shot/reverse-shot, no letterbox.
+- Cue = phrase chunks (~5-8 words / <=40 chars) timed first-word->last-word from the scribe
+  word timestamps.
+- RENDERING: this machine's ffmpeg has NO libass (the `subtitles`/`ass` filter fails with
+  "No option name"). Render each cue as a PIL PNG (clean bold sans e.g. Avenir Next Bold,
+  white fill, dark stroke_width ~7 for legibility over any shot, name segment in accent colour)
+  and overlay with ffmpeg `overlay ... enable='between(t,start,end)'` (one -loop 1 input per cue),
+  exactly like the card/prop passes. Bottom-centre, ~64px bottom margin.

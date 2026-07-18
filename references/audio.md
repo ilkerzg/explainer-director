@@ -87,3 +87,17 @@ flag must never ship, but neither should a false one burn retries forever.
   passed the audit. Tell the rewriter that ambiguous nouns keep their human/scene meaning, and
   eyeball every rewritten prompt (or diff its nouns) before regenerating. A plate that "passes"
   can still be nonsense — the audit checks violations, not intent.
+
+
+## Multi-character voice casting (Seed Audio 1.0)
+
+For dramatized dialogue with several recurring characters, cast each character's canonical
+"OG" voice ONCE with Seed Audio using DESCRIPTION ONLY (no reference audio, no preset). The
+description must be vocally EXTREME and explicit or every character collapses to the same
+default voice: name the voice TYPE (deep bass / baritone / high tenor / feminine alto), plus
+pitch, age, and texture (gravelly, airy, nasal, booming). Verify separation by MEASURING, not
+listening: decode each OG to mono and estimate median F0 by autocorrelation — a real ensemble
+spans a wide range (e.g. 78-187 Hz across six voices). Then for every new line, pass that
+character's OG as the `@AudioN` reference so the voice stays identical across the whole film
+(reference is used ONLY for this chaining step, never when creating the OG). QA every take with
+a scribe transcript-diff (reject extra/hallucinated words).
